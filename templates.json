@@ -1,0 +1,37 @@
+{
+  "version": "2",
+  "templates": [
+    {
+      "id": 1001,
+      "type": 2,
+      "title": "PHP Hello Service",
+      "description": "A simple PHP service that prints 'Hello {NAME}' using environment variables.",
+      "note": "Make sure to set a unique HOST_PORT and your NAME.",
+      "categories": ["php", "demo"],
+      "platform": "linux",
+      "logo": "https://www.php.net/images/logos/php-logo.svg",
+      "name": "php-hello",
+      "administrator_only": false,
+      "env": [
+        {
+          "name": "NAME",
+          "label": "Your Name",
+          "description": "The name to print in the message.",
+          "default": "World",
+          "required": true
+        },
+        {
+          "name": "HOST_PORT",
+          "label": "Host Port",
+          "description": "The port on the host machine to map to the container.",
+          "default": "8001",
+          "required": true
+        }
+      ],
+      "repository": {
+        "url": "https://github.com/nezarfadle/portainer",
+        "stackfile": "docker-compose.yml"
+      }
+    }
+  ]
+}
