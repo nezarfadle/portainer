@@ -40,7 +40,8 @@ services:
       - xibo-network
 
   cms-web:
-    image: xibosignage/xibo-cms:${XIBO_VERSION:-release-4.1.2}
+    #image: xibosignage/xibo-cms:${XIBO_VERSION:-release-4.1.2}
+    image: ghcr.io/xibosignage/xibo-cms:release-4.3.0
     container_name: "${CUSTOMER_ID}_xibo_cms"
     volumes:
       - library:/var/www/cms/library
