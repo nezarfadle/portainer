@@ -7,7 +7,10 @@
       "title": "PHP Hello Service",
       "description": "A simple PHP service that prints 'Hello {NAME}' using environment variables.",
       "note": "Make sure to set a unique HOST_PORT and your NAME.",
-      "categories": ["php", "demo"],
+      "categories": [
+        "php",
+        "demo"
+      ],
       "platform": "linux",
       "logo": "https://www.php.net/images/logos/php-logo.svg",
       "name": "php-hello",
