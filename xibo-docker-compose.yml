@@ -74,7 +74,8 @@ services:
       - "traefik.docker.network=traefik"
 
   xmr:
-    image: xibosignage/xibo-xmr:${XIBO_VERSION:-release-4.1.2}
+    #image: xibosignage/xibo-xmr:${XIBO_VERSION:-release-4.1.2}
+    image: ghcr.io/xibosignage/xibo-xmr:1.0
     container_name: "${CUSTOMER_ID}_xibo_xmr"
     restart: always
     ports:
