@@ -1,106 +1,82 @@
-version: "3.8"
+version: '3.8'
+
+networks:
+  xibo-network:
+    name: "${CUSTOMER_ID}_xibo_network"
+    external: false
+  traefik:
+    external: true
+
+volumes:
+  db-data:
+    name: "${CUSTOMER_ID}_db_data"
+  library:
+    name: "${CUSTOMER_ID}_library"
+  backup:
+    name: "${CUSTOMER_ID}_backup"
 
 services:
-  ${CUSTOMER_ID}-db:
-    image: mysql:8.0
-    container_name: ${CUSTOMER_ID}-db
+  db:
+    image: mysql:5.7
+    container_name: "${CUSTOMER_ID}_xibo_db"
     volumes:
-      - ${CUSTOMER_ID}-db-data:/var/lib/mysql
+      - db-data:/var/lib/mysql
+    restart: always
     environment:
-      - MYSQL_DATABASE=cms
-      - MYSQL_USER=cms
-      - MYSQL_PASSWORD=${DB_PASSWORD}
-      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: cms
+      MYSQL_USER: cms
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --sql-mode=ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION --innodb-file-format=Barracuda --innodb-file-per-table=1 --innodb-large-prefix=1
+    networks:
+      - xibo-network
+
+  memcached:
+    image: memcached:alpine
+    container_name: "${CUSTOMER_ID}_xibo_memcached"
+    command: memcached -m ${MEMCACHED_MEMORY:-64}
     restart: always
     networks:
-      - ${CUSTOMER_ID}-network
-    mem_limit: 1g
+      - xibo-network
 
-  ${CUSTOMER_ID}-xmr:
-    image: ghcr.io/xibosignage/xibo-xmr:1.0
-    container_name: ${CUSTOMER_ID}-xmr
-    restart: always
-    mem_limit: 256m
-    environment:
-      - XMR_PUBLIC_ADDRESS=${CUSTOMER_DOMAIN}
-    networks:
-      - ${CUSTOMER_ID}-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.${CUSTOMER_ID}-xmr.rule=Host(`${CUSTOMER_DOMAIN}`) && PathPrefix(`/xmr`)"
-      - "traefik.http.routers.${CUSTOMER_ID}-xmr.tls=true"
-      - "traefik.http.routers.${CUSTOMER_ID}-xmr.tls.certresolver=letsencrypt"
-      - "traefik.http.services.${CUSTOMER_ID}-xmr.loadbalancer.server.port=9505"
-      - "traefik.docker.network=traefik"
-
-  ${CUSTOMER_ID}-web:
-    image: ghcr.io/xibosignage/xibo-cms:${XIBO_VERSION}
-    container_name: ${CUSTOMER_ID}-web
+  cms-web:
+    image: xibosignage/xibo-cms:${XIBO_VERSION:-release-4.1.2}
+    container_name: "${CUSTOMER_ID}_xibo_cms"
     volumes:
-      - ${CUSTOMER_ID}-cms-custom:/var/www/cms/custom
-      - ${CUSTOMER_ID}-cms-backup:/var/www/backup
-      - ${CUSTOMER_ID}-cms-theme:/var/www/cms/web/theme/custom
-      - ${CUSTOMER_ID}-cms-library:/var/www/cms/library
-      - ${CUSTOMER_ID}-cms-userscripts:/var/www/cms/web/userscripts
-      - ${CUSTOMER_ID}-cms-certs:/var/www/cms/ca-certs
+      - library:/var/www/cms/library
+      - backup:/var/www/backup
     restart: always
     environment:
-      - MYSQL_HOST=${CUSTOMER_ID}-db
-      - MYSQL_USER=cms
-      - MYSQL_PASSWORD=${DB_PASSWORD}
-      - XMR_HOST=${CUSTOMER_ID}-xmr
-      - CMS_USE_MEMCACHED=true
-      - MEMCACHED_HOST=${CUSTOMER_ID}-memcached
-      - CMS_SERVER_NAME=${CUSTOMER_DOMAIN}
-      - CMS_ALIAS=${CUSTOMER_DOMAIN}
-    mem_limit: ${CMS_MEMORY_LIMIT}
+      MYSQL_HOST: db
+      MYSQL_DATABASE: cms
+      MYSQL_USER: cms
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      CMS_SERVER_NAME: ${CUSTOMER_DOMAIN}
+      MEMCACHED_HOST: memcached
+      MEMCACHED_PORT: 11211
+    depends_on:
+      - db
+      - memcached
+    deploy:
+      resources:
+        limits:
+          memory: ${CMS_MEMORY_LIMIT:-1g}
     networks:
-      - ${CUSTOMER_ID}-network
+      - xibo-network
       - traefik
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${CUSTOMER_ID}.rule=Host(`${CUSTOMER_DOMAIN}`)"
-      - "traefik.http.routers.${CUSTOMER_ID}.tls=true"
-      - "traefik.http.routers.${CUSTOMER_ID}.tls.certresolver=letsencrypt"
-      - "traefik.http.services.${CUSTOMER_ID}.loadbalancer.server.port=80"
+      - "traefik.http.routers.${CUSTOMER_ID}-xibo.rule=Host(`${CUSTOMER_DOMAIN}`)"
+      - "traefik.http.routers.${CUSTOMER_ID}-xibo.tls=true"
+      - "traefik.http.routers.${CUSTOMER_ID}-xibo.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${CUSTOMER_ID}-xibo.loadbalancer.server.port=80"
       - "traefik.docker.network=traefik"
 
-  ${CUSTOMER_ID}-memcached:
-    image: memcached:alpine
-    container_name: ${CUSTOMER_ID}-memcached
-    command: memcached -m ${MEMCACHED_MEMORY}
+  xmr:
+    image: xibosignage/xibo-xmr:${XIBO_VERSION:-release-4.1.2}
+    container_name: "${CUSTOMER_ID}_xibo_xmr"
     restart: always
-    mem_limit: ${MEMCACHED_MEMORY}m
+    ports:
+      - "9505"  # Let Docker assign random port to avoid conflicts
     networks:
-      - ${CUSTOMER_ID}-network
-
-  ${CUSTOMER_ID}-quickchart:
-    image: ianw/quickchart
-    container_name: ${CUSTOMER_ID}-quickchart
-    restart: always
-    mem_limit: 256m
-    networks:
-      - ${CUSTOMER_ID}-network
-
-volumes:
-  ${CUSTOMER_ID}-db-data:
-    name: ${CUSTOMER_ID}-db-data
-  ${CUSTOMER_ID}-cms-custom:
-    name: ${CUSTOMER_ID}-cms-custom
-  ${CUSTOMER_ID}-cms-backup:
-    name: ${CUSTOMER_ID}-cms-backup
-  ${CUSTOMER_ID}-cms-theme:
-    name: ${CUSTOMER_ID}-cms-theme
-  ${CUSTOMER_ID}-cms-library:
-    name: ${CUSTOMER_ID}-cms-library
-  ${CUSTOMER_ID}-cms-userscripts:
-    name: ${CUSTOMER_ID}-cms-userscripts
-  ${CUSTOMER_ID}-cms-certs:
-    name: ${CUSTOMER_ID}-cms-certs
-
-networks:
-  ${CUSTOMER_ID}-network:
-    name: ${CUSTOMER_ID}-network
-    driver: bridge
-  traefik:
-    external: true
+      - xibo-network
