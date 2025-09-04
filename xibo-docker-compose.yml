@@ -1,0 +1,106 @@
+version: "3.8"
+
+services:
+  ${CUSTOMER_ID}-db:
+    image: mysql:8.0
+    container_name: ${CUSTOMER_ID}-db
+    volumes:
+      - ${CUSTOMER_ID}-db-data:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=cms
+      - MYSQL_USER=cms
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+    restart: always
+    networks:
+      - ${CUSTOMER_ID}-network
+    mem_limit: 1g
+
+  ${CUSTOMER_ID}-xmr:
+    image: ghcr.io/xibosignage/xibo-xmr:1.0
+    container_name: ${CUSTOMER_ID}-xmr
+    restart: always
+    mem_limit: 256m
+    environment:
+      - XMR_PUBLIC_ADDRESS=${CUSTOMER_DOMAIN}
+    networks:
+      - ${CUSTOMER_ID}-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${CUSTOMER_ID}-xmr.rule=Host(`${CUSTOMER_DOMAIN}`) && PathPrefix(`/xmr`)"
+      - "traefik.http.routers.${CUSTOMER_ID}-xmr.tls=true"
+      - "traefik.http.routers.${CUSTOMER_ID}-xmr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${CUSTOMER_ID}-xmr.loadbalancer.server.port=9505"
+      - "traefik.docker.network=traefik"
+
+  ${CUSTOMER_ID}-web:
+    image: ghcr.io/xibosignage/xibo-cms:${XIBO_VERSION}
+    container_name: ${CUSTOMER_ID}-web
+    volumes:
+      - ${CUSTOMER_ID}-cms-custom:/var/www/cms/custom
+      - ${CUSTOMER_ID}-cms-backup:/var/www/backup
+      - ${CUSTOMER_ID}-cms-theme:/var/www/cms/web/theme/custom
+      - ${CUSTOMER_ID}-cms-library:/var/www/cms/library
+      - ${CUSTOMER_ID}-cms-userscripts:/var/www/cms/web/userscripts
+      - ${CUSTOMER_ID}-cms-certs:/var/www/cms/ca-certs
+    restart: always
+    environment:
+      - MYSQL_HOST=${CUSTOMER_ID}-db
+      - MYSQL_USER=cms
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - XMR_HOST=${CUSTOMER_ID}-xmr
+      - CMS_USE_MEMCACHED=true
+      - MEMCACHED_HOST=${CUSTOMER_ID}-memcached
+      - CMS_SERVER_NAME=${CUSTOMER_DOMAIN}
+      - CMS_ALIAS=${CUSTOMER_DOMAIN}
+    mem_limit: ${CMS_MEMORY_LIMIT}
+    networks:
+      - ${CUSTOMER_ID}-network
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${CUSTOMER_ID}.rule=Host(`${CUSTOMER_DOMAIN}`)"
+      - "traefik.http.routers.${CUSTOMER_ID}.tls=true"
+      - "traefik.http.routers.${CUSTOMER_ID}.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${CUSTOMER_ID}.loadbalancer.server.port=80"
+      - "traefik.docker.network=traefik"
+
+  ${CUSTOMER_ID}-memcached:
+    image: memcached:alpine
+    container_name: ${CUSTOMER_ID}-memcached
+    command: memcached -m ${MEMCACHED_MEMORY}
+    restart: always
+    mem_limit: ${MEMCACHED_MEMORY}m
+    networks:
+      - ${CUSTOMER_ID}-network
+
+  ${CUSTOMER_ID}-quickchart:
+    image: ianw/quickchart
+    container_name: ${CUSTOMER_ID}-quickchart
+    restart: always
+    mem_limit: 256m
+    networks:
+      - ${CUSTOMER_ID}-network
+
+volumes:
+  ${CUSTOMER_ID}-db-data:
+    name: ${CUSTOMER_ID}-db-data
+  ${CUSTOMER_ID}-cms-custom:
+    name: ${CUSTOMER_ID}-cms-custom
+  ${CUSTOMER_ID}-cms-backup:
+    name: ${CUSTOMER_ID}-cms-backup
+  ${CUSTOMER_ID}-cms-theme:
+    name: ${CUSTOMER_ID}-cms-theme
+  ${CUSTOMER_ID}-cms-library:
+    name: ${CUSTOMER_ID}-cms-library
+  ${CUSTOMER_ID}-cms-userscripts:
+    name: ${CUSTOMER_ID}-cms-userscripts
+  ${CUSTOMER_ID}-cms-certs:
+    name: ${CUSTOMER_ID}-cms-certs
+
+networks:
+  ${CUSTOMER_ID}-network:
+    name: ${CUSTOMER_ID}-network
+    driver: bridge
+  traefik:
+    external: true
