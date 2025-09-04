@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - --api.dashboard=true
+      - --api.insecure=false
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-letsencrypt:/letsencrypt
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`${TRAEFIK_DASHBOARD_DOMAIN}`)"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=admin:$$2y$$10$$K6F1p0XkUL.DdLDpD8KX8.p8dUlqYjCp5k/XbF4pjGx2NUgKhGvZu"
+
+volumes:
+  traefik-letsencrypt:
+    name: traefik-letsencrypt
+
+networks:
+  traefik:
+    name: traefik
+    external: true
