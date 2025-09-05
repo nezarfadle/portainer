@@ -67,7 +67,7 @@ services:
       - traefik
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${CUSTOMER_ID}.rule=Host(`${CUSTOMER_DOMAIN}.localhost`)"
+      - "traefik.http.routers.${CUSTOMER_ID}.rule=Host(`${CUSTOMER_DOMAIN}.test`)"
       - "traefik.http.routers.${CUSTOMER_ID}.entrypoints=web"
       - "traefik.http.services.${CUSTOMER_ID}.loadbalancer.server.port=80"  # Changed from 8000 to 80
       # - "traefik.http.routers.${CUSTOMER_ID}-xibo.service=${CUSTOMER_ID}-xibo-service"
