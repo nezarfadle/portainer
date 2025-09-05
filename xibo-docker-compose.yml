@@ -67,11 +67,14 @@ services:
       - traefik
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${CUSTOMER_ID}-xibo.rule=Host(`${CUSTOMER_DOMAIN}`)"
-      - "traefik.http.routers.${CUSTOMER_ID}-xibo.tls=true"
-      - "traefik.http.routers.${CUSTOMER_ID}-xibo.tls.certresolver=letsencrypt"
-      - "traefik.http.services.${CUSTOMER_ID}-xibo.loadbalancer.server.port=80"
-      - "traefik.docker.network=traefik"
+      #- "traefik.http.routers.${CUSTOMER_ID}-xibo.rule=Host(`${CUSTOMER_DOMAIN}`)"
+      - "traefik.http.routers.${CUSTOMER_ID}-xibo.rule=Host(`${CUSTOMER_DOMAIN.localhost}`)"
+      # - "traefik.http.routers.${CUSTOMER_ID}-xibo.tls=true"
+      # - "traefik.http.routers.${CUSTOMER_ID}-xibo.tls.certresolver=letsencrypt"
+      # - "traefik.http.services.${CUSTOMER_ID}-xibo.loadbalancer.server.port=80"
+      - "traefik.http.routers.${CUSTOMER_ID}.entrypoints=web"
+      - "traefik.http.services.${CUSTOMER_ID}-xibo.loadbalancer.server.port=8000"
+      # - "traefik.docker.network=traefik"
 
   xmr:
     #image: xibosignage/xibo-xmr:${XIBO_VERSION:-release-4.1.2}
