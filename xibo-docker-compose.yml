@@ -70,7 +70,7 @@ services:
       - "traefik.http.routers.${CUSTOMER_ID}-xibo.rule=Host(`${CUSTOMER_DOMAIN}.localhost`)"
       - "traefik.http.routers.${CUSTOMER_ID}-xibo.entrypoints=web"
       - "traefik.http.services.${CUSTOMER_ID}-xibo.loadbalancer.server.port=80"  # Changed from 8000 to 80
-      - "traefik.http.routers.${CUSTOMER_ID}-xibo.service=${CUSTOMER_ID}-xibo-service"
+      # - "traefik.http.routers.${CUSTOMER_ID}-xibo.service=${CUSTOMER_ID}-xibo-service"
       - "traefik.docker.network=traefik"
 
   xmr:
