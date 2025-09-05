@@ -40,7 +40,6 @@ services:
       - xibo-network
 
   cms-web:
-    #image: xibosignage/xibo-cms:${XIBO_VERSION:-release-4.1.2}
     image: ghcr.io/xibosignage/xibo-cms:release-4.3.0
     container_name: "${CUSTOMER_ID}_xibo_cms"
     volumes:
@@ -55,7 +54,7 @@ services:
       CMS_SERVER_NAME: ${CUSTOMER_DOMAIN}
       MEMCACHED_HOST: memcached
       MEMCACHED_PORT: 11211
-      APACHE_PORT: 80
+      APACHE_PORT: 80  # Ensure Apache listens on port 80 internally
     depends_on:
       - db
       - memcached
@@ -68,17 +67,13 @@ services:
       - traefik
     labels:
       - "traefik.enable=true"
-      #- "traefik.http.routers.${CUSTOMER_ID}-xibo.rule=Host(`${CUSTOMER_DOMAIN}`)"
       - "traefik.http.routers.${CUSTOMER_ID}-xibo.rule=Host(`${CUSTOMER_DOMAIN}.localhost`)"
-      # - "traefik.http.routers.${CUSTOMER_ID}-xibo.tls=true"
-      # - "traefik.http.routers.${CUSTOMER_ID}-xibo.tls.certresolver=letsencrypt"
-      - "traefik.http.services.${CUSTOMER_ID}-xibo.loadbalancer.server.port=80"
-      - "traefik.http.routers.${CUSTOMER_ID}.entrypoints=web"
-      # - "traefik.http.services.${CUSTOMER_ID}-xibo.loadbalancer.server.port=8000"
-      # - "traefik.docker.network=traefik"
+      - "traefik.http.routers.${CUSTOMER_ID}-xibo.entrypoints=web"
+      - "traefik.http.services.${CUSTOMER_ID}-xibo.loadbalancer.server.port=80"  # Changed from 8000 to 80
+      - "traefik.http.routers.${CUSTOMER_ID}-xibo.service=${CUSTOMER_ID}-xibo-service"
+      - "traefik.docker.network=traefik"
 
   xmr:
-    #image: xibosignage/xibo-xmr:${XIBO_VERSION:-release-4.1.2}
     image: ghcr.io/xibosignage/xibo-xmr:1.0
     container_name: "${CUSTOMER_ID}_xibo_xmr"
     restart: always
@@ -86,4 +81,3 @@ services:
       - "9505"  # Let Docker assign random port to avoid conflicts
     networks:
       - xibo-network
-      - traefik
