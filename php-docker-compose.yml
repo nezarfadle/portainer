@@ -3,7 +3,19 @@ version: '3.8'
 services:
   hello-service:
     image: php-hello:local
-    ports:
-      - "${HOST_PORT}:8000"
+    container_name: hello-service-${NAME}
+    restart: unless-stopped
     environment:
-      - NAME=${NAME}
+      - NAME=${NAME:-Hello Service}
+      - SUBDOMAIN=${SUBDOMAIN}
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${NAME}.rule=Host(`${SUBDOMAIN}.localhost`)"
+      - "traefik.http.routers.${NAME}.entrypoints=web"
+      - "traefik.http.services.${NAME}.loadbalancer.server.port=8000"
+
+networks:
+  traefik:
+    external: true
