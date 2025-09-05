@@ -113,10 +113,10 @@
           "default": "World"
         },
         {
-          "name": "HOST_PORT",
-          "label": "Host Port",
-          "description": "The port on the host machine to map to the container.",
-          "default": "8001"
+          "name": "SUBDOMAIN",
+          "label": "Subdomain",
+          "description": "Subdomain to access this service (e.g., php-app1, php-app2)",
+          "default": "php-app1"
         }
       ]
     }
