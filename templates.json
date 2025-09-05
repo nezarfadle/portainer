@@ -1,0 +1,96 @@
+{
+  "version": "2",
+  "templates": [
+    {
+      "id": 3001,
+      "type": 3,
+      "title": "🎯 Xibo Digital Signage CMS - Customer Instance",
+      "description": "Deploy a complete, isolated Xibo CMS instance for a customer with automatic SSL, database, and reverse proxy configuration. Each customer gets their own subdomain and completely separate environment.",
+      "note": "⚠️ Important: Use unique Customer ID (alphanumeric only). Domain should point to this server's IP address. Default admin login will be created automatically.",
+      "categories": [
+        "digital-signage", 
+        "cms", 
+        "multi-tenant"
+      ],
+      "platform": "linux",
+      "logo": "https://xibo.org.uk/img/xibo-logo.png",
+      "repository": {
+        "url": "https://github.com/nezarfadle/portainer",
+        "stackfile": "xibo-docker-compose.yml"
+      },
+      "env": [
+        {
+          "name": "CUSTOMER_ID",
+          "label": "🏷️ Customer ID",
+          "description": "Unique identifier for this customer (letters and numbers only, no spaces or special characters). Example: customer001, acmecorp, johndoe123"
+        },
+        {
+          "name": "CUSTOMER_DOMAIN",
+          "label": "🌐 Customer Domain",
+          "description": "Full domain name for this customer's CMS. Must point to this server's IP address. Example: customer1.yourdomain.com, acme.yourcompany.com"
+        },
+        {
+          "name": "DB_PASSWORD",
+          "label": "🔐 Database Password",
+          "description": "Secure password for the MySQL database (minimum 12 characters recommended)",
+          "default": "ChangeThisPassword123!"
+        },
+        {
+          "name": "DB_ROOT_PASSWORD",
+          "label": "🔑 Database Root Password",
+          "description": "Root password for MySQL database (minimum 12 characters recommended)",
+          "default": "ChangeRootPassword123!"
+        },
+        {
+          "name": "XIBO_VERSION",
+          "label": "📦 Xibo Version",
+          "description": "Xibo CMS Docker image version to deploy",
+          "default": "release-4.1.2"
+        },
+        {
+          "name": "CMS_MEMORY_LIMIT",
+          "label": "💾 CMS Memory Limit",
+          "description": "Memory limit for the CMS container (e.g., 1g, 2g, 512m)",
+          "default": "1g"
+        },
+        {
+          "name": "MEMCACHED_MEMORY",
+          "label": "🧠 Memcached Memory (MB)",
+          "description": "Memory allocation for Memcached in megabytes",
+          "default": "64"
+        }
+      ]
+    },
+    {
+      "id": 3002,
+      "type": 3,
+      "title": "🛡️ Traefik Reverse Proxy",
+      "description": "Deploy Traefik reverse proxy with automatic SSL certificates via Let's Encrypt. Required for Xibo multi-tenant setup. Deploy this FIRST before creating any customer instances.",
+      "note": "⚠️ Deploy this ONLY ONCE per server. Update the email address for Let's Encrypt notifications.",
+      "categories": [
+        "reverse-proxy", 
+        "ssl", 
+        "infrastructure"
+      ],
+      "platform": "linux",
+      "logo": "https://doc.traefik.io/traefik/assets/img/traefik.logo.png",
+      "repository": {
+        "url": "https://github.com/nezarfadle/portainer",
+        "stackfile": "traefik.yml"
+      },
+      "env": [
+        {
+          "name": "ACME_EMAIL",
+          "label": "📧 Email for SSL Certificates",
+          "description": "Your email address for Let's Encrypt SSL certificate notifications"
+        },
+        {
+          "name": "TRAEFIK_DASHBOARD_DOMAIN",
+          "label": "🖥️ Traefik Dashboard Domain (Optional)",
+          "description": "Domain for Traefik dashboard access (e.g., traefik.yourdomain.com). Leave empty to disable secure access.",
+          "default": ""
+        }
+      ]
+    }
+  ]
+}
