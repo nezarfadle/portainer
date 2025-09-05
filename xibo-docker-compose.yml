@@ -55,6 +55,7 @@ services:
       CMS_SERVER_NAME: ${CUSTOMER_DOMAIN}
       MEMCACHED_HOST: memcached
       MEMCACHED_PORT: 11211
+      APACHE_PORT: 80
     depends_on:
       - db
       - memcached
@@ -71,9 +72,9 @@ services:
       - "traefik.http.routers.${CUSTOMER_ID}-xibo.rule=Host(`${CUSTOMER_DOMAIN}.localhost`)"
       # - "traefik.http.routers.${CUSTOMER_ID}-xibo.tls=true"
       # - "traefik.http.routers.${CUSTOMER_ID}-xibo.tls.certresolver=letsencrypt"
-      # - "traefik.http.services.${CUSTOMER_ID}-xibo.loadbalancer.server.port=80"
+      - "traefik.http.services.${CUSTOMER_ID}-xibo.loadbalancer.server.port=80"
       - "traefik.http.routers.${CUSTOMER_ID}.entrypoints=web"
-      - "traefik.http.services.${CUSTOMER_ID}-xibo.loadbalancer.server.port=8000"
+      # - "traefik.http.services.${CUSTOMER_ID}-xibo.loadbalancer.server.port=8000"
       # - "traefik.docker.network=traefik"
 
   xmr:
@@ -85,3 +86,4 @@ services:
       - "9505"  # Let Docker assign random port to avoid conflicts
     networks:
       - xibo-network
+      - traefik
