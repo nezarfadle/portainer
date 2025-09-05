@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  hello-service:
+    image: php-hello:local
+    ports:
+      - "${HOST_PORT}:8000"
+    environment:
+      - NAME=${NAME}
